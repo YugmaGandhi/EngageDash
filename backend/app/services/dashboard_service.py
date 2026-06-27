@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.deps.auth import is_admin_or_manager
 from app.models.customer import Customer, CustomerStatus
 from app.models.insight import Insight, Sentiment
@@ -18,10 +19,35 @@ from app.models.user import User
 RECENT_DAYS = 7
 RECENT_INTERACTIONS_LIMIT = 5
 
+# All dashboard cache keys start with this, so they are easy to clear together.
+CACHE_KEY_PREFIX = "dashboard:"
+
 
 class DashboardService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, cache=None):
         self.db = db
+        self.cache = cache  # a RedisCache, or None to skip caching
+
+    def get_dashboard(self, user: User) -> dict:
+        """Return metrics from the cache if present, otherwise compute and cache them."""
+        if self.cache is None:
+            return self.compute_metrics(user)
+
+        key = self._cache_key(user)
+        cached = self.cache.get_json(key)
+        if cached is not None:
+            return cached
+
+        metrics = self.compute_metrics(user)
+        ttl = get_settings().dashboard_cache_ttl_seconds
+        self.cache.set_json(key, metrics, ttl=ttl)
+        return metrics
+
+    def _cache_key(self, user: User) -> str:
+        # Admins and managers share the global view; each CSM has their own key.
+        if is_admin_or_manager(user):
+            return f"{CACHE_KEY_PREFIX}all"
+        return f"{CACHE_KEY_PREFIX}csm:{user.id}"
 
     def compute_metrics(self, user: User) -> dict:
         # owner_id = None means "no filter" (admins/managers see everything).
