@@ -53,6 +53,18 @@ export const fetchProfile = createAsyncThunk("auth/fetchProfile", async () => {
   return authApi.getMe();
 });
 
+// Update the logged-in user's own profile (currently just the name).
+export const updateProfile = createAsyncThunk<User, { name: string }, { rejectValue: string }>(
+  "auth/updateProfile",
+  async (input, { rejectWithValue }) => {
+    try {
+      return await authApi.updateMe(input);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, "Could not update profile."));
+    }
+  },
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -93,6 +105,10 @@ const authSlice = createSlice({
     builder.addCase(fetchProfile.rejected, (state) => {
       state.status = "unauthenticated";
       state.user = null;
+    });
+    // Updating the profile just refreshes the stored user.
+    builder.addCase(updateProfile.fulfilled, (state, action) => {
+      state.user = action.payload;
     });
   },
 });
