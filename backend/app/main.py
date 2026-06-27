@@ -17,10 +17,29 @@ configure_logging()
 
 settings = get_settings()
 
+# Short descriptions for each group of endpoints. These show up as sections
+# in the Swagger UI (/docs) and ReDoc (/redoc).
+tags_metadata = [
+    {"name": "health", "description": "Service health and readiness checks."},
+    {"name": "auth", "description": "Register, login, token refresh, and profile."},
+    {"name": "users", "description": "User management (admin only)."},
+    {"name": "customers", "description": "Manage customers."},
+    {"name": "interactions", "description": "Manage customer meetings and interactions."},
+    {"name": "insights", "description": "AI-generated insights from meeting notes."},
+    {"name": "dashboard", "description": "Aggregated business metrics."},
+]
+
 app = FastAPI(
     title="EngageDash API",
     version="0.1.0",
-    description="AI-powered Customer Success Insights Dashboard — API.",
+    description=(
+        "AI-powered Customer Success Insights Dashboard.\n\n"
+        "Manage customers and interactions, generate AI insights from meeting notes, "
+        "and view operational metrics."
+    ),
+    openapi_tags=tags_metadata,
+    contact={"name": "EngageDash", "email": "support@engagedash.example"},
+    license_info={"name": "MIT"},
 )
 
 # Allow the frontend (origins from settings) to call the API from the browser.
