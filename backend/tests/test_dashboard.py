@@ -1,9 +1,13 @@
 """Critical tests for the dashboard: metrics, caching, invalidation, scoping."""
 
+from datetime import datetime, timezone
+
 import fakeredis
 
 from app.core.redis import RedisCache
 from app.models.customer import Customer, CustomerStatus
+from app.models.insight import Insight, InsightStatus, Sentiment
+from app.models.interaction import Interaction, InteractionType
 from app.models.user import UserRole
 
 
@@ -74,6 +78,62 @@ def test_set_json_applies_ttl():
 
 
 # ---------- Role scoping ----------
+
+def test_sentiment_breakdown_excludes_fallback_insights(client, create_user, db_session):
+    user = create_user("csm@x.com", role=UserRole.CSM)
+    headers = auth_headers(client, "csm@x.com")
+
+    # A customer + interaction to attach insights to.
+    customer = Customer(
+        name="Acme",
+        status=CustomerStatus.ACTIVE,
+        health_score=50,
+        assigned_csm_id=user.id,
+        created_by_id=user.id,
+    )
+    db_session.add(customer)
+    db_session.commit()
+    db_session.refresh(customer)
+
+    interaction = Interaction(
+        customer_id=customer.id,
+        created_by_id=user.id,
+        type=InteractionType.MEETING,
+        title="QBR",
+        notes="notes",
+        occurred_at=datetime.now(timezone.utc),
+    )
+    db_session.add(interaction)
+    db_session.commit()
+    db_session.refresh(interaction)
+
+    # One real (success) neutral insight, and one fallback (also neutral).
+    db_session.add_all(
+        [
+            Insight(
+                interaction_id=interaction.id,
+                summary="ok",
+                sentiment=Sentiment.NEUTRAL,
+                action_items=[],
+                risks=[],
+                status=InsightStatus.SUCCESS,
+            ),
+            Insight(
+                interaction_id=interaction.id,
+                summary="fallback",
+                sentiment=Sentiment.NEUTRAL,
+                action_items=[],
+                risks=[],
+                status=InsightStatus.FALLBACK,
+            ),
+        ]
+    )
+    db_session.commit()
+
+    data = client.get("/dashboard", headers=headers).json()
+    # Only the success insight counts — the fallback neutral is excluded.
+    assert data["sentiment_breakdown"]["neutral"] == 1
+
 
 def test_dashboard_role_scoping(client, create_user):
     create_user("csm@x.com", role=UserRole.CSM)

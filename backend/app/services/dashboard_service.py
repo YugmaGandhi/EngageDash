@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.deps.auth import is_admin_or_manager
 from app.models.customer import Customer, CustomerStatus
-from app.models.insight import Insight, Sentiment
+from app.models.insight import Insight, InsightStatus, Sentiment
 from app.models.interaction import Interaction
 from app.models.user import User
 
@@ -123,7 +123,7 @@ class DashboardService:
     # ---- insights ----
 
     def _sentiment_breakdown(self, owner_id: int | None) -> dict:
-        query = select(Insight.sentiment, func.count()).group_by(Insight.sentiment)
+        query = select(Insight.sentiment, func.count())
         if owner_id is not None:
             # Join insight -> interaction -> customer to scope by the CSM.
             query = (
@@ -131,6 +131,9 @@ class DashboardService:
                 .join(Customer, Interaction.customer_id == Customer.id)
                 .where(Customer.assigned_csm_id == owner_id)
             )
+        # Only count successful AI results. Fallback insights default to "neutral"
+        # because generation failed, so they aren't real sentiment.
+        query = query.where(Insight.status == InsightStatus.SUCCESS).group_by(Insight.sentiment)
 
         counts = {sentiment.value: 0 for sentiment in Sentiment}
         for sentiment, count in self.db.execute(query).all():
