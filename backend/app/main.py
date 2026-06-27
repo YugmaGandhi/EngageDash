@@ -11,6 +11,7 @@ from app.core.config import get_settings
 from app.core.error_handlers import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware
+from app.routers import auth, users
 
 # Configure logging before anything emits logs.
 configure_logging()
@@ -59,3 +60,8 @@ register_exception_handlers(app)
 def health() -> dict[str, str]:
     """Liveness probe used by Docker healthchecks and uptime monitoring."""
     return {"status": "ok"}
+
+
+# Feature routers.
+app.include_router(auth.router)
+app.include_router(users.router)
