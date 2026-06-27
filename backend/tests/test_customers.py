@@ -19,13 +19,15 @@ def create_customer(client, headers, **fields):
 # ---------- Create + validation ----------
 
 def test_create_customer_success(client, create_user):
-    create_user("csm@x.com", role=UserRole.CSM)
+    create_user("csm@x.com", role=UserRole.CSM, name="Casey")
     headers = auth_headers(client, "csm@x.com")
     response = create_customer(client, headers, company="Acme Corp", status="active", health_score=80)
     assert response.status_code == 201
     body = response.json()
     assert body["name"] == "Acme"
     assert body["assigned_csm_id"] == body["created_by_id"]  # defaults to creator
+    # The response includes the owner's name, not just the id.
+    assert body["assigned_csm_name"] == "Casey"
 
 
 def test_create_customer_invalid_email_is_rejected(client, create_user):

@@ -4,9 +4,10 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+from app.models.user import User
 
 
 class CustomerStatus(str, enum.Enum):
@@ -42,7 +43,20 @@ class Customer(Base):
     assigned_csm_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
+    # Eager-loaded so responses can show the owner's/creator's name (no extra query
+    # per customer). Two FKs point at users, so we say which one each uses.
+    assigned_csm: Mapped[User] = relationship(foreign_keys=[assigned_csm_id], lazy="joined")
+    created_by: Mapped[User] = relationship(foreign_keys=[created_by_id], lazy="joined")
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    @property
+    def assigned_csm_name(self) -> str | None:
+        return self.assigned_csm.name if self.assigned_csm else None
+
+    @property
+    def created_by_name(self) -> str | None:
+        return self.created_by.name if self.created_by else None

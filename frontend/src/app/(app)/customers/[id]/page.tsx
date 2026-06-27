@@ -85,7 +85,8 @@ export default function CustomerDetailPage() {
           <Detail label="Email" value={customer.email ?? "—"} />
           <Detail label="Phone" value={customer.phone ?? "—"} />
           <Detail label="Health score" value={String(customer.health_score)} />
-          <Detail label="Assigned CSM (id)" value={String(customer.assigned_csm_id)} />
+          <Detail label="Assigned CSM" value={customer.assigned_csm_name ?? "—"} />
+          <Detail label="Created by" value={customer.created_by_name ?? "—"} />
           <Detail label="Created" value={formatDate(customer.created_at)} />
         </CardContent>
       </Card>

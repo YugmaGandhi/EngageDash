@@ -56,7 +56,9 @@ class CustomerResponse(BaseModel):
     status: CustomerStatus
     health_score: int
     assigned_csm_id: int
+    assigned_csm_name: str | None
     created_by_id: int
+    created_by_name: str | None
     created_at: datetime
     updated_at: datetime
 

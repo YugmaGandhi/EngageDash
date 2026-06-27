@@ -9,7 +9,9 @@ export interface Customer {
   status: CustomerStatus;
   health_score: number;
   assigned_csm_id: number;
+  assigned_csm_name: string | null;
   created_by_id: number;
+  created_by_name: string | null;
   created_at: string;
   updated_at: string;
 }
