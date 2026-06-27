@@ -1,8 +1,10 @@
 """Schemas for AI insights."""
 
-from pydantic import BaseModel, Field
+from datetime import datetime
 
-from app.models.insight import Sentiment
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.insight import InsightStatus, Sentiment
 
 
 class InsightAI(BaseModel):
@@ -12,3 +14,19 @@ class InsightAI(BaseModel):
     sentiment: Sentiment
     action_items: list[str] = Field(default_factory=list)
     risks: list[str] = Field(default_factory=list)
+
+
+class InsightResponse(BaseModel):
+    """An insight as returned by the API."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    interaction_id: int
+    summary: str
+    sentiment: Sentiment
+    action_items: list[str]
+    risks: list[str]
+    status: InsightStatus  # "success" or "fallback"
+    model: str | None
+    created_at: datetime
