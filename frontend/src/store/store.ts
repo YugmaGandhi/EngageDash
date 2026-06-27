@@ -1,10 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 
+import authReducer from "./slices/authSlice";
+
 export const store = configureStore({
   reducer: {
-    // Feature slices (auth, customers, interactions, dashboard) are added in
-    // later phases. This small placeholder keeps the store valid until then.
-    app: (state: { ready: boolean } = { ready: true }) => state,
+    auth: authReducer,
+    // More feature slices (customers, interactions, dashboard) are added later.
   },
 });
 
