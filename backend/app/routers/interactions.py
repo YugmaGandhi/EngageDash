@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.core.redis import RedisCache, get_redis
 from app.deps.auth import get_current_user
 from app.models.interaction import InteractionType
 from app.models.user import User
@@ -32,8 +33,9 @@ def create_interaction(
     data: InteractionCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    cache: RedisCache = Depends(get_redis),
 ):
-    return InteractionService(db).create_interaction(current_user, data)
+    return InteractionService(db, cache).create_interaction(current_user, data)
 
 
 @router.get(
@@ -87,5 +89,6 @@ def update_interaction(
     data: InteractionUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    cache: RedisCache = Depends(get_redis),
 ):
-    return InteractionService(db).update_interaction(current_user, interaction_id, data)
+    return InteractionService(db, cache).update_interaction(current_user, interaction_id, data)

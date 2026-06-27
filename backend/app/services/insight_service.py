@@ -10,13 +10,15 @@ from app.models.insight import Insight
 from app.models.user import User
 from app.repositories.insight import InsightRepository
 from app.services.ai.generator import generate_insight
+from app.services.cache_service import CacheService
 from app.services.interaction_service import InteractionService
 
 
 class InsightService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, cache=None):
         self.repo = InsightRepository(db)
         self.interactions = InteractionService(db)
+        self.cache = CacheService(cache)
 
     def generate_for_interaction(self, current_user: User, interaction_id: int) -> Insight:
         # Raises 403/404 if the user can't access this interaction.
@@ -25,7 +27,7 @@ class InsightService:
         # generate_insight never raises; it returns a success or fallback result.
         result = generate_insight(interaction.notes)
 
-        return self.repo.create(
+        insight = self.repo.create(
             {
                 "interaction_id": interaction.id,
                 "summary": result.data.summary,
@@ -37,6 +39,9 @@ class InsightService:
                 "raw_response": result.raw_response,
             }
         )
+        # Sentiment metrics changed, so refresh the dashboard cache.
+        self.cache.invalidate_dashboard()
+        return insight
 
     def list_for_interaction(self, current_user: User, interaction_id: int) -> list[Insight]:
         # Access check first.

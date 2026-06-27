@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.core.redis import RedisCache, get_redis
 from app.deps.auth import get_current_user
 from app.models.customer import CustomerStatus
 from app.models.user import User
@@ -24,8 +25,9 @@ def create_customer(
     data: CustomerCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    cache: RedisCache = Depends(get_redis),
 ):
-    return CustomerService(db).create_customer(current_user, data)
+    return CustomerService(db, cache).create_customer(current_user, data)
 
 
 @router.get("", response_model=list[CustomerListItem], summary="List customers (with filters)")
@@ -73,8 +75,9 @@ def update_customer(
     data: CustomerUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    cache: RedisCache = Depends(get_redis),
 ):
-    return CustomerService(db).update_customer(current_user, customer_id, data)
+    return CustomerService(db, cache).update_customer(current_user, customer_id, data)
 
 
 @router.delete(
@@ -87,5 +90,6 @@ def delete_customer(
     customer_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    cache: RedisCache = Depends(get_redis),
 ):
-    CustomerService(db).delete_customer(current_user, customer_id)
+    CustomerService(db, cache).delete_customer(current_user, customer_id)

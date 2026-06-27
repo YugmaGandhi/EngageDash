@@ -14,11 +14,13 @@ from app.models.customer import Customer, CustomerStatus
 from app.models.user import User
 from app.repositories.customer import CustomerRepository
 from app.schemas.customer import CustomerCreate, CustomerUpdate
+from app.services.cache_service import CacheService
 
 
 class CustomerService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, cache=None):
         self.repo = CustomerRepository(db)
+        self.cache = CacheService(cache)
 
     def list_customers(
         self,
@@ -58,7 +60,9 @@ class CustomerService:
         values = data.model_dump(exclude={"assigned_csm_id"})
         values["assigned_csm_id"] = assigned_csm_id
         values["created_by_id"] = current_user.id
-        return self.repo.create(values)
+        customer = self.repo.create(values)
+        self.cache.invalidate_dashboard()
+        return customer
 
     def update_customer(self, current_user: User, customer_id: int, data: CustomerUpdate) -> Customer:
         # get_customer also enforces that a CSM can only touch their own customer.
@@ -71,7 +75,9 @@ class CustomerService:
             if changes["assigned_csm_id"] != current_user.id:
                 raise PermissionDeniedError("CSMs cannot reassign customers")
 
-        return self.repo.update(customer, changes)
+        updated = self.repo.update(customer, changes)
+        self.cache.invalidate_dashboard()
+        return updated
 
     def delete_customer(self, current_user: User, customer_id: int) -> None:
         if not is_admin_or_manager(current_user):
@@ -81,6 +87,7 @@ class CustomerService:
         if not customer:
             raise NotFoundError("Customer not found")
         self.repo.delete(customer)
+        self.cache.invalidate_dashboard()
 
     def _ensure_can_access(self, current_user: User, customer: Customer) -> None:
         """Raise if a CSM tries to access a customer that isn't theirs."""

@@ -15,13 +15,15 @@ from app.models.interaction import Interaction, InteractionType
 from app.models.user import User
 from app.repositories.interaction import InteractionRepository
 from app.schemas.interaction import InteractionCreate, InteractionUpdate
+from app.services.cache_service import CacheService
 from app.services.customer_service import CustomerService
 
 
 class InteractionService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, cache=None):
         self.repo = InteractionRepository(db)
         self.customers = CustomerService(db)
+        self.cache = CacheService(cache)
 
     def create_interaction(self, current_user: User, data: InteractionCreate) -> Interaction:
         # Raises if the user can't access the parent customer.
@@ -29,7 +31,9 @@ class InteractionService:
 
         values = data.model_dump()
         values["created_by_id"] = current_user.id
-        return self.repo.create(values)
+        interaction = self.repo.create(values)
+        self.cache.invalidate_dashboard()
+        return interaction
 
     def get_interaction(self, current_user: User, interaction_id: int) -> Interaction:
         interaction = self.repo.get(interaction_id)
@@ -73,4 +77,6 @@ class InteractionService:
         # get_interaction also enforces access via the parent customer.
         interaction = self.get_interaction(current_user, interaction_id)
         changes = data.model_dump(exclude_unset=True)
-        return self.repo.update(interaction, changes)
+        updated = self.repo.update(interaction, changes)
+        self.cache.invalidate_dashboard()
+        return updated
