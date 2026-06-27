@@ -1,32 +1,40 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
+import { Loading } from "@/components/common/Loading";
 import { getAccessToken } from "@/lib/tokenStorage";
+import { useAppSelector } from "@/store/hooks";
 
 /**
- * Protects the app pages: if there is no access token, send the user to /login.
+ * Protects the app pages.
  *
- * This is the scaffolding version (checks the token in localStorage). In Phase 8
- * it is hooked into the Redux auth state so it also reacts to login/logout.
+ * - No token at all -> redirect to /login.
+ * - Token present but profile not loaded yet -> show a loading spinner.
+ * - Authenticated -> render the page.
+ * - Token rejected (status "unauthenticated") -> redirect to /login.
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [allowed, setAllowed] = useState(false);
+  const status = useAppSelector((s) => s.auth.status);
 
   useEffect(() => {
-    // We can only read localStorage on the client, so the auth check runs on mount.
-    if (getAccessToken()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- on-mount auth check
-      setAllowed(true);
-    } else {
+    if (!getAccessToken()) {
       router.replace("/login");
     }
   }, [router]);
 
-  // Render nothing until we know the user is allowed (avoids flashing the page).
-  if (!allowed) return null;
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
 
-  return <>{children}</>;
+  if (status === "authenticated") {
+    return <>{children}</>;
+  }
+
+  // Either loading the profile, or about to redirect.
+  return <Loading label="Loading..." />;
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { LayoutDashboard, MessagesSquare, Users } from "lucide-react";
+import { LayoutDashboard, MessagesSquare, Shield, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/store/hooks";
 
-const navItems = [
+const baseNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/interactions", label: "Interactions", icon: MessagesSquare },
@@ -14,6 +15,13 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const role = useAppSelector((s) => s.auth.user?.role);
+
+  // Only admins see the Users management link.
+  const navItems =
+    role === "admin"
+      ? [...baseNavItems, { href: "/users", label: "Users", icon: Shield }]
+      : baseNavItems;
 
   return (
     <aside className="bg-sidebar hidden w-60 shrink-0 border-r md:block">
