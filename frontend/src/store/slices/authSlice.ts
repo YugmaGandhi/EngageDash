@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import * as authApi from "@/lib/api/auth";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import { clearTokens, setTokens } from "@/lib/tokenStorage";
 import type { AppDispatch } from "@/store/store";
 import type { LoginInput, RegisterInput, User } from "@/types";
@@ -19,19 +20,33 @@ const initialState: AuthState = {
 };
 
 // Log in: get tokens, save them, then load the user's profile.
-export const login = createAsyncThunk("auth/login", async (credentials: LoginInput) => {
-  const tokens = await authApi.login(credentials);
-  setTokens(tokens.access_token, tokens.refresh_token);
-  return authApi.getMe();
-});
+export const login = createAsyncThunk<User, LoginInput, { rejectValue: string }>(
+  "auth/login",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const tokens = await authApi.login(credentials);
+      setTokens(tokens.access_token, tokens.refresh_token);
+      return await authApi.getMe();
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, "Invalid email or password."));
+    }
+  },
+);
 
 // Register, then log in with the same credentials so the user is signed in.
-export const register = createAsyncThunk("auth/register", async (input: RegisterInput) => {
-  await authApi.register(input);
-  const tokens = await authApi.login({ email: input.email, password: input.password });
-  setTokens(tokens.access_token, tokens.refresh_token);
-  return authApi.getMe();
-});
+export const register = createAsyncThunk<User, RegisterInput, { rejectValue: string }>(
+  "auth/register",
+  async (input, { rejectWithValue }) => {
+    try {
+      await authApi.register(input);
+      const tokens = await authApi.login({ email: input.email, password: input.password });
+      setTokens(tokens.access_token, tokens.refresh_token);
+      return await authApi.getMe();
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, "Registration failed."));
+    }
+  },
+);
 
 // Load the current user from the saved token (used to restore the session on reload).
 export const fetchProfile = createAsyncThunk("auth/fetchProfile", async () => {
@@ -51,6 +66,9 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.status = "authenticated";
     },
+    clearError(state) {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     // login, register, and fetchProfile all end with an authenticated user.
@@ -66,11 +84,11 @@ const authSlice = createSlice({
     }
     builder.addCase(login.rejected, (state, action) => {
       state.status = "unauthenticated";
-      state.error = action.error.message ?? "Login failed";
+      state.error = action.payload ?? "Login failed.";
     });
     builder.addCase(register.rejected, (state, action) => {
       state.status = "unauthenticated";
-      state.error = action.error.message ?? "Registration failed";
+      state.error = action.payload ?? "Registration failed.";
     });
     builder.addCase(fetchProfile.rejected, (state) => {
       state.status = "unauthenticated";
@@ -79,7 +97,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuth, setUser } = authSlice.actions;
+export const { clearAuth, setUser, clearError } = authSlice.actions;
 
 // Log out: clear the saved tokens and reset auth state.
 export const logout = () => (dispatch: AppDispatch) => {

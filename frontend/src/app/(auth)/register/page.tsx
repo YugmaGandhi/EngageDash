@@ -9,25 +9,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { clearError, login } from "@/store/slices/authSlice";
+import { clearError, register } from "@/store/slices/authSlice";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { status, error } = useAppSelector((s) => s.auth);
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Once authenticated, go to the dashboard.
   useEffect(() => {
     if (status === "authenticated") {
       router.replace("/dashboard");
     }
   }, [status, router]);
 
-  // Clear any leftover server error when leaving the page.
   useEffect(() => {
     return () => {
       dispatch(clearError());
@@ -36,12 +35,16 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !password) {
-      setFormError("Please enter your email and password.");
+    if (!name || !email || !password) {
+      setFormError("Please fill in all fields.");
+      return;
+    }
+    if (password.length < 8) {
+      setFormError("Password must be at least 8 characters.");
       return;
     }
     setFormError(null);
-    dispatch(login({ email, password }));
+    dispatch(register({ name, email, password }));
   }
 
   const loading = status === "loading";
@@ -50,11 +53,15 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign in to EngageDash</CardTitle>
-          <CardDescription>Enter your credentials to continue.</CardDescription>
+          <CardTitle>Create your account</CardTitle>
+          <CardDescription>Sign up to start using EngageDash.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -73,7 +80,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete="new-password"
               />
             </div>
 
@@ -82,14 +89,14 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Creating account..." : "Create account"}
             </Button>
           </form>
 
           <p className="text-muted-foreground mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-foreground underline">
-              Register
+            Already have an account?{" "}
+            <Link href="/login" className="text-foreground underline">
+              Sign in
             </Link>
           </p>
         </CardContent>
