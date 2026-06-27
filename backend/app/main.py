@@ -6,11 +6,15 @@ database, Redis, and error handling are layered in from Phase 1 onward.
 
 from fastapi import FastAPI
 
+from app.core.error_handlers import register_exception_handlers
+
 app = FastAPI(
     title="EngageDash API",
     version="0.1.0",
     description="AI-powered Customer Success Insights Dashboard — API.",
 )
+
+register_exception_handlers(app)
 
 
 @app.get("/health", tags=["health"], summary="Health check")
