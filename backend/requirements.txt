@@ -19,6 +19,9 @@ redis==5.2.0
 bcrypt==4.2.1
 PyJWT==2.10.1
 
+# ---- AI (OpenAI-compatible client, pointed at NVIDIA's endpoint) ----
+openai==1.57.4
+
 # ---- Tests ----
 pytest==8.3.4
 httpx==0.28.1
