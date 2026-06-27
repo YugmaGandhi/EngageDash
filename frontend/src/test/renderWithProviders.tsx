@@ -5,6 +5,8 @@ import { Provider } from "react-redux";
 
 import authReducer, { type AuthState } from "@/store/slices/authSlice";
 import customersReducer from "@/store/slices/customersSlice";
+import dashboardReducer from "@/store/slices/dashboardSlice";
+import insightsReducer from "@/store/slices/insightsSlice";
 import interactionsReducer from "@/store/slices/interactionsSlice";
 
 // Build a fresh store for a test, optionally with preloaded auth state.
@@ -14,6 +16,8 @@ export function makeTestStore(auth?: AuthState) {
       auth: authReducer,
       customers: customersReducer,
       interactions: interactionsReducer,
+      insights: insightsReducer,
+      dashboard: dashboardReducer,
     },
     preloadedState: auth ? { auth } : undefined,
   });
