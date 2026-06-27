@@ -1,7 +1,12 @@
 """Application configuration.
 
-All settings are read from environment variables (or a local `.env` file when running
-outside Docker). Access the singleton via `get_settings()`.
+All settings come from `backend/.env` (or the real environment). We build the
+database and Redis URLs from their parts (host, port, user, ...) so that running
+in Docker vs locally only needs a different *host* — no duplicated URLs or
+secrets. In Docker, compose overrides `POSTGRES_HOST`/`REDIS_HOST` with the
+service names; locally they stay `localhost`.
+
+Access the settings singleton via `get_settings()`.
 """
 
 from functools import lru_cache
@@ -16,8 +21,6 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        # The root .env also holds vars for other services (Postgres, frontend);
-        # ignore anything this model doesn't declare.
         extra="ignore",
     )
 
@@ -27,11 +30,16 @@ class Settings(BaseSettings):
     # Comma-separated list of allowed CORS origins (parsed via `cors_origins`).
     backend_cors_origins: str = "http://localhost:3000"
 
-    # ---------- Database ----------
-    database_url: str = "postgresql+psycopg://engagedash:change-me@localhost:5432/engagedash"
+    # ---------- Database (URL built from these parts) ----------
+    postgres_user: str = "engagedash"
+    postgres_password: str = "change-me"
+    postgres_db: str = "engagedash"
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
 
     # ---------- Redis ----------
-    redis_url: str = "redis://localhost:6379/0"
+    redis_host: str = "localhost"
+    redis_port: int = 6379
 
     # ---------- JWT / Auth ----------
     jwt_secret_key: str = "change-me-to-a-long-random-string"
@@ -46,6 +54,19 @@ class Settings(BaseSettings):
 
     # ---------- Cache ----------
     dashboard_cache_ttl_seconds: int = 120
+
+    @property
+    def database_url(self) -> str:
+        """Full SQLAlchemy database URL, built from the parts above."""
+        return (
+            f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
+    @property
+    def redis_url(self) -> str:
+        """Full Redis URL, built from the parts above."""
+        return f"redis://{self.redis_host}:{self.redis_port}/0"
 
     @property
     def cors_origins(self) -> list[str]:

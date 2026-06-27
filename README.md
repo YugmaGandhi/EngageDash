@@ -25,14 +25,14 @@ ends, AI response handling, Redis caching, and a fully containerized setup.
 ### Run with Docker (recommended)
 
 ```bash
-# 1. Configure environment
-cp .env.example .env        # then edit .env and set AI_API_KEY (and a strong JWT_SECRET_KEY)
+# 1. Configure environment (backend/.env is the source of truth)
+cp backend/.env.example backend/.env   # then set AI_API_KEY and a strong JWT_SECRET_KEY
 
 # 2. Build and launch the full stack
-docker compose up --build   # add -d to run detached
+docker compose up --build              # add -d to run detached
 
 # 3. Stop it
-docker compose down          # add -v to also drop the Postgres volume (wipes data)
+docker compose down                     # add -v to also drop the Postgres volume (wipes data)
 ```
 
 The stack starts four services with healthchecks; the frontend waits for the backend, which
@@ -44,7 +44,7 @@ waits for Postgres and Redis to be healthy.
 | Backend API | http://localhost:8000        | FastAPI                        |
 | Swagger UI  | http://localhost:8000/docs   | Interactive API docs           |
 | ReDoc       | http://localhost:8000/redoc  | Alternative API docs           |
-| PostgreSQL  | localhost:5432               | user/db from `.env`            |
+| PostgreSQL  | localhost:5432               | user/db from `backend/.env`    |
 | Redis       | localhost:6379               | cache                          |
 
 > **Ports** 3000/8000/5432/6379 must be free on the host. If one is taken, stop the
@@ -52,12 +52,27 @@ waits for Postgres and Redis to be healthy.
 
 ### Environment variables
 
-All configuration lives in the root **`.env`** (see [`.env.example`](./.env.example) for the full,
-documented list — Postgres, Redis, JWT, AI provider, cache TTL, and frontend API URL).
-`.env` is gitignored; never commit real secrets.
+Configuration is per app, with no root env file:
 
-The AI provider is DeepSeek V4 Flash via NVIDIA's free OpenAI-compatible endpoint — set
-`AI_API_KEY` to your NVIDIA key.
+- **`backend/.env`** — the backend's single source of truth (Postgres, Redis, JWT, AI provider,
+  cache TTL). Written for local dev (hosts = `localhost`); when running via Docker, compose
+  overrides only `POSTGRES_HOST`/`REDIS_HOST` with the service names. See
+  [`backend/.env.example`](./backend/.env.example).
+- **`frontend/.env.local`** — only `NEXT_PUBLIC_API_URL` (for running `npm run dev` outside Docker).
+  See [`frontend/.env.example`](./frontend/.env.example). In Docker this is baked in at build time.
+
+Env files are gitignored; never commit real secrets. The AI provider is DeepSeek V4 Flash via
+NVIDIA's free OpenAI-compatible endpoint — set `AI_API_KEY` in `backend/.env`.
+
+### Run locally without Docker
+
+```bash
+# Postgres + Redis via Docker, apps run directly
+docker compose up -d postgres redis
+cd backend && cp .env.example .env && ./.venv/Scripts/python -m alembic upgrade head \
+  && ./.venv/Scripts/python -m uvicorn app.main:app --reload   # http://localhost:8000
+cd frontend && cp .env.example .env.local && npm run dev        # http://localhost:3000
+```
 
 ## Documentation
 
