@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 
 import authReducer from "./slices/authSlice";
 import customersReducer from "./slices/customersSlice";
+import dashboardReducer from "./slices/dashboardSlice";
 import insightsReducer from "./slices/insightsSlice";
 import interactionsReducer from "./slices/interactionsSlice";
 
@@ -11,7 +12,7 @@ export const store = configureStore({
     customers: customersReducer,
     interactions: interactionsReducer,
     insights: insightsReducer,
-    // The dashboard slice is added in Phase 10.
+    dashboard: dashboardReducer,
   },
 });
 
