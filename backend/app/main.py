@@ -7,6 +7,11 @@ database, Redis, and error handling are layered in from Phase 1 onward.
 from fastapi import FastAPI
 
 from app.core.error_handlers import register_exception_handlers
+from app.core.logging import configure_logging
+from app.core.middleware import RequestLoggingMiddleware
+
+# Configure logging before anything emits logs.
+configure_logging()
 
 app = FastAPI(
     title="EngageDash API",
@@ -14,6 +19,7 @@ app = FastAPI(
     description="AI-powered Customer Success Insights Dashboard — API.",
 )
 
+app.add_middleware(RequestLoggingMiddleware)
 register_exception_handlers(app)
 
 

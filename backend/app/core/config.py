@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     # ---------- App ----------
     environment: str = "development"
+    log_level: str = "INFO"
     # Comma-separated list of allowed CORS origins (parsed via `cors_origins`).
     backend_cors_origins: str = "http://localhost:3000"
 
