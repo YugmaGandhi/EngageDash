@@ -6,6 +6,7 @@ Alembic autogenerate and for table creation. Models are added in later phases.
 
 from app.core.db import Base
 from app.models.customer import Customer, CustomerStatus
+from app.models.insight import Insight, InsightStatus, Sentiment
 from app.models.interaction import Interaction, InteractionType
 from app.models.user import User, UserRole
 
@@ -17,4 +18,7 @@ __all__ = [
     "CustomerStatus",
     "Interaction",
     "InteractionType",
+    "Insight",
+    "InsightStatus",
+    "Sentiment",
 ]
