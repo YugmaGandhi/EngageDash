@@ -13,7 +13,9 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.db import Base, get_db
 from app.core.redis import RedisCache, get_redis
+from app.core.security import hash_password
 from app.main import app
+from app.models.user import User, UserRole
 
 # One in-memory SQLite database shared across the test (StaticPool keeps a single
 # connection, so the data created in a test is visible to the API call).
@@ -62,3 +64,24 @@ def client(db_session):
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def create_user(db_session):
+    """Factory to insert a user directly (used to set up roles in tests)."""
+
+    def _create_user(email, password="supersecret123", role=UserRole.CSM, name="Test", is_active=True):
+        user = User(
+            name=name,
+            email=email,
+            hashed_password=hash_password(password),
+            role=role,
+            is_active=is_active,
+        )
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
+        return user
+
+    return _create_user
+
