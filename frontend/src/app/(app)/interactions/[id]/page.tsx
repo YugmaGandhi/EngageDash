@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { Loading } from "@/components/common/Loading";
+import { InteractionInsights } from "@/components/insights/InteractionInsights";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,7 +64,7 @@ export default function InteractionDetailPage() {
         </CardContent>
       </Card>
 
-      {/* AI insights for this interaction are added in Phase 10. */}
+      <InteractionInsights interactionId={id} />
     </div>
   );
 }
