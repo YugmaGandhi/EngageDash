@@ -66,7 +66,8 @@ export function CustomerForm({ initial, submitting, submitLabel, onSubmit }: Pro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    // noValidate: we show our own validation messages instead of the browser's.
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <div className="space-y-2">
         <Label htmlFor="name">Name *</Label>
         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />

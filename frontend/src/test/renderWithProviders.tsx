@@ -4,11 +4,17 @@ import type { ReactElement } from "react";
 import { Provider } from "react-redux";
 
 import authReducer, { type AuthState } from "@/store/slices/authSlice";
+import customersReducer from "@/store/slices/customersSlice";
+import interactionsReducer from "@/store/slices/interactionsSlice";
 
 // Build a fresh store for a test, optionally with preloaded auth state.
 export function makeTestStore(auth?: AuthState) {
   return configureStore({
-    reducer: { auth: authReducer },
+    reducer: {
+      auth: authReducer,
+      customers: customersReducer,
+      interactions: interactionsReducer,
+    },
     preloadedState: auth ? { auth } : undefined,
   });
 }
