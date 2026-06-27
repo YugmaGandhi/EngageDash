@@ -103,17 +103,111 @@ cd backend && cp .env.example .env && ./.venv/Scripts/python -m alembic upgrade 
 cd frontend && cp .env.example .env.local && npm run dev        # http://localhost:3000
 ```
 
-## Documentation
+## Architecture
 
-- **[docs/PLAN.md](./docs/PLAN.md)** — master plan: architecture, data model, RBAC matrix, phased roadmap.
-- **[docs/phases/](./docs/phases)** — detailed per-phase stage breakdowns and progress tracking.
+A monorepo with a FastAPI backend and a Next.js frontend, backed by PostgreSQL and Redis,
+orchestrated with Docker Compose.
+
+### Backend — layered
+
+Requests flow through clear layers, so business rules live in one place and are easy to test:
+
+```
+router  →  service  →  repository  →  model (SQLAlchemy)
+  │           │            │
+  │           │            └─ DB access (queries, CRUD via a shared BaseRepository)
+  │           └─ business rules + RBAC (e.g. CSM sees only own customers)
+  └─ HTTP only: validate input (Pydantic schemas), call the service, return a response_model
+```
+
+- **`core/`** — cross-cutting setup: config (`pydantic-settings`), DB engine/session, Redis client,
+  JWT/password security, centralized error handling (consistent `{error: {...}}` envelope),
+  structured logging with request IDs, and the request middleware.
+- **`deps/`** — FastAPI dependencies: `get_current_user`, and `require_roles(...)` for RBAC.
+- **`schemas/`** — Pydantic request/response models (validation on the backend).
+- **`alembic/`** — migrations (applied automatically on container startup).
+
+### Frontend — Next.js App Router + Redux Toolkit
+
+- **`store/slices/`** — one slice per feature (auth, customers, interactions, insights, dashboard).
+  Async thunks call the typed API layer via **Axios**; the slice holds loading/error/data state.
+- **`lib/axios.ts`** — single Axios instance: attaches the JWT, and on a 401 transparently refreshes
+  the token once and retries.
+- **`lib/api/`** — typed functions per resource; **`types/`** mirrors the backend schemas.
+- **`components/`** — UI built with **shadcn/ui + Tailwind**, driven by a central design-token layer
+  (semantic CSS variables for colors, customer-status and sentiment palettes, light/dark).
+- Route protection + role-aware UI keep the frontend in step with the backend's RBAC.
+
+### Data model
+
+- **User** — `name, email, role (admin|manager|csm), is_active`
+- **Customer** — `name, company, email, phone, status (prospect|active|at_risk|churned),
+  health_score, assigned_csm_id → User, created_by_id → User`
+- **Interaction** — `customer_id → Customer (cascade), type, title, notes, occurred_at`
+- **Insight** — `interaction_id → Interaction, summary, sentiment, action_items[], risks[],
+  status (success|fallback), model`
+
+### RBAC
+
+| Capability | Admin | Manager | CSM |
+|------------|:-----:|:-------:|:---:|
+| Manage users | ✅ | ❌ | ❌ |
+| View / edit customers & interactions | all | all | own only |
+| Delete customers | ✅ | ✅ | ❌ |
+| Generate AI insights | ✅ | ✅ | own |
+| Dashboard | global | global | scoped to own |
+
+### AI insights
+
+On request, an interaction's notes are sent to the model (DeepSeek V4 Flash via NVIDIA's
+OpenAI-compatible endpoint, using the `openai` SDK). The response is **parsed** (handling code
+fences / extra prose), **validated** against a schema, and stored. If anything fails — no API key,
+network error, bad JSON — a neutral **fallback** insight is saved (`status="fallback"`) so the
+request never errors.
+
+### Caching
+
+The **dashboard metrics** response is cached in Redis with a TTL, keyed by role scope. Any
+customer / interaction / insight change **invalidates** the cache, so the dashboard never shows
+stale data.
+
+## Testing
+
+```bash
+# Backend (pytest, against an in-memory SQLite DB + fakeredis — no services needed)
+cd backend && ./.venv/Scripts/python -m pytest
+
+# Frontend (Vitest + React Testing Library, API mocked)
+cd frontend && npm test
+```
 
 ## Project Structure
 
 ```
 EngageDash/
-├── backend/    # FastAPI app
-├── frontend/   # Next.js app
-├── docs/       # planning & phase docs
+├── backend/
+│   ├── app/
+│   │   ├── core/          # config, db, redis, security, errors, logging, middleware
+│   │   ├── models/        # SQLAlchemy models
+│   │   ├── schemas/       # Pydantic request/response models
+│   │   ├── repositories/  # DB access (BaseRepository + per-entity)
+│   │   ├── services/      # business logic + RBAC (incl. ai/ for insight generation)
+│   │   ├── deps/          # auth + role-guard dependencies
+│   │   ├── routers/       # API endpoints
+│   │   ├── main.py        # app entrypoint (CORS, middleware, routers, OpenAPI)
+│   │   └── seed.py        # demo data
+│   ├── alembic/           # migrations
+│   ├── tests/             # pytest suite
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── app/           # Next.js App Router pages ((auth) + (app) route groups)
+│   │   ├── components/    # UI (ui/ = shadcn, layout/, customers/, insights/, ...)
+│   │   ├── store/         # Redux store + slices + typed hooks
+│   │   ├── lib/           # axios, api clients, helpers
+│   │   ├── types/         # shared TS types
+│   │   └── test/          # Vitest tests
+│   └── Dockerfile
 └── docker-compose.yml
 ```
