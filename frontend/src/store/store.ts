@@ -2,12 +2,14 @@ import { configureStore } from "@reduxjs/toolkit";
 
 import authReducer from "./slices/authSlice";
 import customersReducer from "./slices/customersSlice";
+import interactionsReducer from "./slices/interactionsSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     customers: customersReducer,
-    // More feature slices (interactions, dashboard) are added later.
+    interactions: interactionsReducer,
+    // The dashboard slice is added in Phase 10.
   },
 });
 
