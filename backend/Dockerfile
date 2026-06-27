@@ -18,12 +18,17 @@ RUN pip install -r requirements.txt
 
 # ---------- Application ----------
 COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
+COPY entrypoint.sh ./
 
 # Run as a non-root user.
 RUN useradd --create-home --uid 1000 appuser \
+    && chmod +x entrypoint.sh \
     && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Runs migrations, then starts the server.
+CMD ["sh", "entrypoint.sh"]
