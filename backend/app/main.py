@@ -11,7 +11,7 @@ from app.core.config import get_settings
 from app.core.error_handlers import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware
-from app.routers import auth, customers, insights, interactions, users
+from app.routers import auth, customers, dashboard, insights, interactions, users
 
 # Configure logging before anything emits logs.
 configure_logging()
@@ -68,3 +68,4 @@ app.include_router(users.router)
 app.include_router(customers.router)
 app.include_router(interactions.router)
 app.include_router(insights.router)
+app.include_router(dashboard.router)
