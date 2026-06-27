@@ -1,0 +1,24 @@
+# Dependencies & build output
+node_modules/
+.next/
+out/
+.turbo/
+coverage/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Docker / VCS / IDE
+Dockerfile
+.dockerignore
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Misc
+*.log
+npm-debug.log*
+.DS_Store
