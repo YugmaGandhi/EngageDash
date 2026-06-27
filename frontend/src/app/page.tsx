@@ -1,23 +1,21 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
 export default function Home() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "0.75rem",
-        fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
-        padding: "2rem",
-        textAlign: "center",
-      }}
-    >
-      <h1 style={{ fontSize: "2rem", fontWeight: 700, margin: 0 }}>EngageDash</h1>
-      <p style={{ color: "#666", margin: 0 }}>AI-powered Customer Success Insights Dashboard</p>
-      <p style={{ color: "#999", fontSize: "0.875rem", margin: 0 }}>
-        Frontend skeleton — UI is built out from Phase 7.
-      </p>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
+      <h1 className="text-3xl font-bold">EngageDash</h1>
+      <p className="text-muted-foreground">AI-powered Customer Success Insights Dashboard</p>
+
+      {/* Quick check that the design tokens render. */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Badge className="bg-status-active text-white">Active</Badge>
+        <Badge className="bg-status-at-risk text-white">At risk</Badge>
+        <Badge className="bg-status-churned text-white">Churned</Badge>
+        <Badge className="bg-sentiment-positive text-white">Positive</Badge>
+      </div>
+
+      <Button>Get started</Button>
     </main>
   );
 }
