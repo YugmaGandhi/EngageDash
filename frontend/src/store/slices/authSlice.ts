@@ -6,7 +6,7 @@ import { clearTokens, setTokens } from "@/lib/tokenStorage";
 import type { AppDispatch } from "@/store/store";
 import type { LoginInput, RegisterInput, User } from "@/types";
 
-interface AuthState {
+export interface AuthState {
   user: User | null;
   // idle = not checked yet, loading = a request is in flight.
   status: "idle" | "loading" | "authenticated" | "unauthenticated";
