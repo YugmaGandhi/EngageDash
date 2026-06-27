@@ -5,33 +5,19 @@ They are translated into a consistent JSON envelope by the handlers in
 `app.core.error_handlers`.
 """
 
-from typing import Any
-
-
 class AppError(Exception):
-    """Base application error.
+    """Base class for errors we raise on purpose.
 
-    Attributes:
-        status_code: HTTP status to return.
-        code: stable machine-readable error code (e.g. "not_found").
-        message: human-readable message.
-        details: optional structured context.
+    Each subclass sets the HTTP `status_code` and a short `code` string.
+    `message` is shown to the client; `details` can hold extra context.
     """
 
-    status_code: int = 500
-    code: str = "internal_error"
+    status_code = 500
+    code = "internal_error"
 
-    def __init__(
-        self,
-        message: str | None = None,
-        *,
-        details: Any | None = None,
-        code: str | None = None,
-    ) -> None:
+    def __init__(self, message=None, details=None):
         self.message = message or self.__class__.__name__
         self.details = details
-        if code is not None:
-            self.code = code
         super().__init__(self.message)
 
 

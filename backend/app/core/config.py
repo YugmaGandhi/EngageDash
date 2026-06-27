@@ -6,7 +6,6 @@ outside Docker). Access the singleton via `get_settings()`.
 
 from functools import lru_cache
 
-from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -46,17 +45,16 @@ class Settings(BaseSettings):
     ai_model: str = "deepseek-ai/deepseek-v4-flash"
 
     # ---------- Cache ----------
-    dashboard_cache_ttl_seconds: int = Field(default=120, ge=0)
+    dashboard_cache_ttl_seconds: int = 120
 
-    @computed_field  # type: ignore[prop-decorator]
     @property
     def cors_origins(self) -> list[str]:
-        """CORS origins as a clean list (split from the comma-separated env value)."""
-        return [o.strip() for o in self.backend_cors_origins.split(",") if o.strip()]
+        """Turn the comma-separated CORS string into a list of origins."""
+        return [origin.strip() for origin in self.backend_cors_origins.split(",") if origin.strip()]
 
-    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_production(self) -> bool:
+        """True when running in the production environment."""
         return self.environment.lower() == "production"
 
 
