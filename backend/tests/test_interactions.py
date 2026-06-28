@@ -93,6 +93,18 @@ def test_csm_sees_only_own_interactions(client, create_user):
     assert [i["title"] for i in client.get("/interactions", headers=h2).json()] == ["For 2"]
 
 
+def test_csm_cannot_view_another_csms_interaction(client, create_user):
+    create_user("csm1@x.com", role=UserRole.CSM)
+    create_user("csm2@x.com", role=UserRole.CSM)
+    h1 = auth_headers(client, "csm1@x.com")
+    h2 = auth_headers(client, "csm2@x.com")
+    c1 = make_customer(client, h1, name="C1")
+    interaction_id = make_interaction(client, h1, c1).json()["id"]
+
+    # csm2 guessing/editing the id in the URL must be blocked, not just hidden.
+    assert client.get(f"/interactions/{interaction_id}", headers=h2).status_code == 403
+
+
 # ---------- Update / 404 ----------
 
 def test_update_interaction(client, create_user):

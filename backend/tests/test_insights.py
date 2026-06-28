@@ -137,3 +137,17 @@ def test_csm_cannot_generate_for_inaccessible_interaction(client, create_user, m
 
     response = client.post(f"/interactions/{interaction_id}/insights", headers=h2)
     assert response.status_code == 403
+
+
+def test_csm_cannot_list_insights_for_inaccessible_interaction(client, create_user, monkeypatch):
+    mock_ai(monkeypatch, GoodClient)
+    create_user("csm1@x.com", role=UserRole.CSM)
+    create_user("csm2@x.com", role=UserRole.CSM)
+    h1 = auth_headers(client, "csm1@x.com")
+    h2 = auth_headers(client, "csm2@x.com")
+    interaction_id = make_interaction(client, h1)
+    client.post(f"/interactions/{interaction_id}/insights", headers=h1)
+
+    # csm2 must not be able to read csm1's insights by editing the URL.
+    response = client.get(f"/interactions/{interaction_id}/insights", headers=h2)
+    assert response.status_code == 403
