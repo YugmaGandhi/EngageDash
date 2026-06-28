@@ -1,5 +1,7 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -15,7 +17,14 @@ export default function Home() {
         <Badge className="bg-sentiment-positive text-white">Positive</Badge>
       </div>
 
-      <Button>Get started</Button>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <Link href="/login" className={buttonVariants()}>
+          Get started
+        </Link>
+        <Link href="/register" className={buttonVariants({ variant: "outline" })}>
+          Create account
+        </Link>
+      </div>
     </main>
   );
 }
