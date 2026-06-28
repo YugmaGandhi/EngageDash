@@ -7,14 +7,20 @@ import type { Insight } from "@/types";
 interface InsightsState {
   items: Insight[]; // insights for the interaction currently being viewed (newest first)
   status: "idle" | "loading" | "succeeded" | "failed";
-  generating: boolean; // true while a new insight is being generated
+  currentInteractionId: number | null; // which interaction `items` belong to
+  // Which interaction is currently generating (null = none). Only one runs at a
+  // time, so this doubles as the "is anything generating" flag.
+  generatingId: number | null;
+  generatingTitle: string | null; // its title, so any page can name it
   error: string | null;
 }
 
 const initialState: InsightsState = {
   items: [],
   status: "idle",
-  generating: false,
+  currentInteractionId: null,
+  generatingId: null,
+  generatingTitle: null,
   error: null,
 };
 
@@ -29,16 +35,19 @@ export const fetchInsights = createAsyncThunk<Insight[], number, { rejectValue: 
   },
 );
 
-export const generateInsight = createAsyncThunk<Insight, number, { rejectValue: string }>(
-  "insights/generateInsight",
-  async (interactionId, { rejectWithValue }) => {
-    try {
-      return await insightsApi.generateInsight(interactionId);
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
-    }
-  },
-);
+// We pass the title too (not just the id) so any screen can show which
+// interaction is currently being generated.
+export const generateInsight = createAsyncThunk<
+  Insight,
+  { id: number; title: string },
+  { rejectValue: string }
+>("insights/generateInsight", async ({ id }, { rejectWithValue }) => {
+  try {
+    return await insightsApi.generateInsight(id);
+  } catch (error) {
+    return rejectWithValue(getErrorMessage(error));
+  }
+});
 
 const insightsSlice = createSlice({
   name: "insights",
@@ -47,13 +56,15 @@ const insightsSlice = createSlice({
     clearInsights(state) {
       state.items = [];
       state.status = "idle";
+      state.currentInteractionId = null;
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchInsights.pending, (state) => {
+      .addCase(fetchInsights.pending, (state, action) => {
         state.status = "loading";
+        state.currentInteractionId = action.meta.arg; // the interaction we're loading
         state.error = null;
       })
       .addCase(fetchInsights.fulfilled, (state, action) => {
@@ -66,15 +77,22 @@ const insightsSlice = createSlice({
       });
 
     builder
-      .addCase(generateInsight.pending, (state) => {
-        state.generating = true;
+      .addCase(generateInsight.pending, (state, action) => {
+        state.generatingId = action.meta.arg.id;
+        state.generatingTitle = action.meta.arg.title;
       })
       .addCase(generateInsight.fulfilled, (state, action) => {
-        state.generating = false;
-        state.items.unshift(action.payload); // newest first
+        state.generatingId = null;
+        state.generatingTitle = null;
+        // Only add it to the visible list if the user is still on that
+        // interaction; otherwise it loads when they open that interaction.
+        if (action.payload.interaction_id === state.currentInteractionId) {
+          state.items.unshift(action.payload); // newest first
+        }
       })
       .addCase(generateInsight.rejected, (state, action) => {
-        state.generating = false;
+        state.generatingId = null;
+        state.generatingTitle = null;
         state.error = action.payload ?? "Could not generate insight.";
       });
   },

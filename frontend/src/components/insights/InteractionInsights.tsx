@@ -11,9 +11,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearInsights, fetchInsights, generateInsight } from "@/store/slices/insightsSlice";
 
-export function InteractionInsights({ interactionId }: { interactionId: number }) {
+export function InteractionInsights({
+  interactionId,
+  interactionTitle,
+}: {
+  interactionId: number;
+  interactionTitle: string;
+}) {
   const dispatch = useAppDispatch();
-  const { items, status, generating } = useAppSelector((s) => s.insights);
+  const { items, status, generatingId, generatingTitle } = useAppSelector((s) => s.insights);
 
   useEffect(() => {
     dispatch(fetchInsights(interactionId));
@@ -23,13 +29,16 @@ export function InteractionInsights({ interactionId }: { interactionId: number }
   }, [dispatch, interactionId]);
 
   const latest = items[0];
+  const isGeneratingThis = generatingId === interactionId;
+  // Another interaction is generating — block starting a second one.
+  const isGeneratingOther = generatingId !== null && generatingId !== interactionId;
 
   async function handleGenerate() {
     try {
-      await dispatch(generateInsight(interactionId)).unwrap();
-      toast.success("Insight generated");
+      await dispatch(generateInsight({ id: interactionId, title: interactionTitle })).unwrap();
+      toast.success(`Insight generated for “${interactionTitle}”`);
     } catch (err) {
-      toast.error(typeof err === "string" ? err : "Could not generate insight");
+      toast.error(typeof err === "string" ? err : `Could not generate insight for “${interactionTitle}”`);
     }
   }
 
@@ -41,10 +50,16 @@ export function InteractionInsights({ interactionId }: { interactionId: number }
             <Sparkles className="h-5 w-5" />
             AI Insights
           </span>
-          <Button size="sm" onClick={handleGenerate} disabled={generating}>
-            {generating ? "Generating..." : latest ? "Regenerate" : "Generate insight"}
+          <Button size="sm" onClick={handleGenerate} disabled={generatingId !== null}>
+            {isGeneratingThis ? "Generating..." : latest ? "Regenerate" : "Generate insight"}
           </Button>
         </CardTitle>
+        {isGeneratingOther && (
+          <p className="text-muted-foreground mt-2 text-xs">
+            Generating an insight for “{generatingTitle}”… please wait for it to finish before
+            starting another.
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         {status === "loading" ? (

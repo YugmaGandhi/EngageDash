@@ -32,7 +32,7 @@ describe("InteractionInsights", () => {
 
   it("shows a generate button when there are no insights", async () => {
     vi.mocked(insightsApi.listInsights).mockResolvedValue([]);
-    renderWithProviders(<InteractionInsights interactionId={1} />);
+    renderWithProviders(<InteractionInsights interactionId={1} interactionTitle="Quarterly review" />);
 
     expect(await screen.findByText(/no insights yet/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /generate insight/i })).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe("InteractionInsights", () => {
     vi.mocked(insightsApi.listInsights).mockResolvedValue([]);
     vi.mocked(insightsApi.generateInsight).mockResolvedValue(successInsight);
     const user = userEvent.setup();
-    renderWithProviders(<InteractionInsights interactionId={1} />);
+    renderWithProviders(<InteractionInsights interactionId={1} interactionTitle="Quarterly review" />);
 
     await screen.findByText(/no insights yet/i);
     await user.click(screen.getByRole("button", { name: /generate insight/i }));
@@ -63,7 +63,7 @@ describe("InteractionInsights", () => {
       risks: [],
     };
     vi.mocked(insightsApi.listInsights).mockResolvedValue([fallback]);
-    renderWithProviders(<InteractionInsights interactionId={1} />);
+    renderWithProviders(<InteractionInsights interactionId={1} interactionTitle="Quarterly review" />);
 
     expect(await screen.findByText(/AI generation was unavailable/i)).toBeInTheDocument();
   });

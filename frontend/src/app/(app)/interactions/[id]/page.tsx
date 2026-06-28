@@ -64,7 +64,7 @@ export default function InteractionDetailPage() {
         </CardContent>
       </Card>
 
-      <InteractionInsights interactionId={id} />
+      <InteractionInsights interactionId={id} interactionTitle={interaction.title} />
     </div>
   );
 }
