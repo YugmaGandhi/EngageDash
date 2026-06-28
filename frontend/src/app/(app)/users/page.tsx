@@ -66,7 +66,7 @@ export default function UsersPage() {
   if (error) return <ErrorState message={error} />;
 
   return (
-    <div>
+    <div className="mx-auto max-w-4xl">
       <h1 className="mb-4 text-2xl font-bold">Users</h1>
       <div className="overflow-x-auto rounded-md border">
         <Table>

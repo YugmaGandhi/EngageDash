@@ -29,9 +29,9 @@ export default function InteractionDetailPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{interaction.title}</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="truncate text-2xl font-bold">{interaction.title}</h1>
         <Link
           href={`/interactions/${id}/edit`}
           className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -41,30 +41,34 @@ export default function InteractionDetailPage() {
         </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Badge variant="secondary">{interaction.type}</Badge>
-            <span className="text-muted-foreground text-sm font-normal">
-              {formatDateTime(interaction.occurred_at)}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div className="text-muted-foreground text-xs">Customer</div>
-            <Link href={`/customers/${interaction.customer_id}`} className="hover:underline">
-              #{interaction.customer_id}
-            </Link>
-          </div>
-          <div>
-            <div className="text-muted-foreground mb-1 text-xs">Notes</div>
-            <p className="whitespace-pre-wrap">{interaction.notes}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Badge variant="secondary">{interaction.type}</Badge>
+              <span className="text-muted-foreground text-sm font-normal">
+                {formatDateTime(interaction.occurred_at)}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="text-muted-foreground text-xs">Customer</div>
+              <Link href={`/customers/${interaction.customer_id}`} className="hover:underline">
+                #{interaction.customer_id}
+              </Link>
+            </div>
+            <div>
+              <div className="text-muted-foreground mb-1 text-xs">Notes</div>
+              <p className="whitespace-pre-wrap">{interaction.notes}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-      <InteractionInsights interactionId={id} interactionTitle={interaction.title} />
+        <div className="lg:col-span-2">
+          <InteractionInsights interactionId={id} interactionTitle={interaction.title} />
+        </div>
+      </div>
     </div>
   );
 }

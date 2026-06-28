@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/slices/authSlice";
 
+import { MobileNav } from "./MobileNav";
+
 export function Topbar() {
   const user = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
@@ -21,8 +23,8 @@ export function Topbar() {
 
   return (
     <header className="flex h-14 items-center justify-between border-b px-4 md:px-6">
-      {/* App name shows on small screens where the sidebar is hidden. */}
-      <div className="font-semibold md:hidden">EngageDash</div>
+      {/* The hamburger opens the nav drawer on small screens (sidebar is hidden there). */}
+      <MobileNav />
       <div className="ml-auto flex items-center gap-3">
         {user && (
           <Link href="/profile" className="text-sm hover:underline">

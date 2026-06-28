@@ -40,7 +40,7 @@ export default function EditCustomerPage() {
   }
 
   return (
-    <div className="max-w-lg">
+    <div className="mx-auto max-w-lg">
       <h1 className="mb-4 text-2xl font-bold">Edit customer</h1>
       <CustomerForm
         initial={selected}

@@ -42,7 +42,7 @@ export default function EditInteractionPage() {
   }
 
   return (
-    <div className="max-w-lg">
+    <div className="mx-auto max-w-lg">
       <h1 className="mb-4 text-2xl font-bold">Edit interaction</h1>
       <InteractionForm
         customers={customers}

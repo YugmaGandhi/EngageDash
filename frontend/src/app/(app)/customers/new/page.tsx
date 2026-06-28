@@ -27,7 +27,7 @@ export default function NewCustomerPage() {
   }
 
   return (
-    <div className="max-w-lg">
+    <div className="mx-auto max-w-lg">
       <h1 className="mb-4 text-2xl font-bold">New customer</h1>
       <CustomerForm submitting={submitting} submitLabel="Create customer" onSubmit={handleSubmit} />
     </div>

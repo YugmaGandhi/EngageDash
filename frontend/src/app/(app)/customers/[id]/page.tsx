@@ -54,10 +54,10 @@ export default function CustomerDetailPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{customer.name}</h1>
-        <div className="flex gap-2">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="truncate text-2xl font-bold">{customer.name}</h1>
+        <div className="flex shrink-0 gap-2">
           <Link
             href={`/customers/${id}/edit`}
             className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -73,56 +73,58 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Details
-            <CustomerStatusBadge status={customer.status} />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 text-sm">
-          <Detail label="Company" value={customer.company ?? "—"} />
-          <Detail label="Email" value={customer.email ?? "—"} />
-          <Detail label="Phone" value={customer.phone ?? "—"} />
-          <Detail label="Health score" value={String(customer.health_score)} />
-          <Detail label="Assigned CSM" value={customer.assigned_csm_name ?? "—"} />
-          <Detail label="Created by" value={customer.created_by_name ?? "—"} />
-          <Detail label="Created" value={formatDate(customer.created_at)} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Details
+              <CustomerStatusBadge status={customer.status} />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+            <Detail label="Company" value={customer.company ?? "—"} />
+            <Detail label="Email" value={customer.email ?? "—"} />
+            <Detail label="Phone" value={customer.phone ?? "—"} />
+            <Detail label="Health score" value={String(customer.health_score)} />
+            <Detail label="Assigned CSM" value={customer.assigned_csm_name ?? "—"} />
+            <Detail label="Created by" value={customer.created_by_name ?? "—"} />
+            <Detail label="Created" value={formatDate(customer.created_at)} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Interactions</span>
-            <Link
-              href={`/interactions/new?customer_id=${id}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              <Plus className="h-4 w-4" />
-              Log interaction
-            </Link>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {interactions.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No interactions yet.</p>
-          ) : (
-            <ul className="divide-y">
-              {interactions.map((it) => (
-                <li key={it.id} className="flex items-center justify-between py-2">
-                  <Link href={`/interactions/${it.id}`} className="hover:underline">
-                    {it.title}
-                  </Link>
-                  <span className="text-muted-foreground text-xs">
-                    {it.type} · {formatDate(it.occurred_at)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Interactions</span>
+              <Link
+                href={`/interactions/new?customer_id=${id}`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <Plus className="h-4 w-4" />
+                Log interaction
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {interactions.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No interactions yet.</p>
+            ) : (
+              <ul className="divide-y">
+                {interactions.map((it) => (
+                  <li key={it.id} className="flex items-center justify-between py-2">
+                    <Link href={`/interactions/${it.id}`} className="hover:underline">
+                      {it.title}
+                    </Link>
+                    <span className="text-muted-foreground text-xs">
+                      {it.type} · {formatDate(it.occurred_at)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
