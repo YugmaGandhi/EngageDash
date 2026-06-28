@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     # ---------- Redis ----------
     redis_host: str = "localhost"
     redis_port: int = 6379
+    # Empty locally; managed Redis (e.g. Railway) requires a password.
+    redis_password: str = ""
 
     # ---------- JWT / Auth ----------
     jwt_secret_key: str = "change-me-to-a-long-random-string"
@@ -65,8 +67,9 @@ class Settings(BaseSettings):
 
     @property
     def redis_url(self) -> str:
-        """Full Redis URL, built from the parts above."""
-        return f"redis://{self.redis_host}:{self.redis_port}/0"
+        """Full Redis URL, built from the parts above (with a password if set)."""
+        auth = f":{self.redis_password}@" if self.redis_password else ""
+        return f"redis://{auth}{self.redis_host}:{self.redis_port}/0"
 
     @property
     def cors_origins(self) -> list[str]:
