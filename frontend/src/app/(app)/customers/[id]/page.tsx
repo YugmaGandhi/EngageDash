@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { ErrorState } from "@/components/common/ErrorState";
 import { Loading } from "@/components/common/Loading";
 import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -27,6 +28,8 @@ export default function CustomerDetailPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const customer = useAppSelector((s) => s.customers.selected);
+  const selectedStatus = useAppSelector((s) => s.customers.selectedStatus);
+  const selectedError = useAppSelector((s) => s.customers.selectedError);
   const role = useAppSelector((s) => s.auth.user?.role);
 
   const [interactions, setInteractions] = useState<InteractionListItem[]>([]);
@@ -49,6 +52,9 @@ export default function CustomerDetailPage() {
     }
   }
 
+  if (selectedStatus === "failed") {
+    return <ErrorState message={selectedError ?? "Customer not found."} />;
+  }
   if (!customer || customer.id !== id) {
     return <Loading label="Loading customer..." />;
   }

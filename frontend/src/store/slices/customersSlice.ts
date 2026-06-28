@@ -13,8 +13,10 @@ import type {
 interface CustomersState {
   items: CustomerListItem[]; // the list
   selected: Customer | null; // the customer being viewed/edited
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
+  status: "idle" | "loading" | "succeeded" | "failed"; // the list
+  error: string | null; // the list
+  selectedStatus: "idle" | "loading" | "succeeded" | "failed"; // the single item
+  selectedError: string | null; // the single item (e.g. not found)
 }
 
 const initialState: CustomersState = {
@@ -22,6 +24,8 @@ const initialState: CustomersState = {
   selected: null,
   status: "idle",
   error: null,
+  selectedStatus: "idle",
+  selectedError: null,
 };
 
 export const fetchCustomers = createAsyncThunk<
@@ -89,6 +93,8 @@ const customersSlice = createSlice({
   reducers: {
     clearSelected(state) {
       state.selected = null;
+      state.selectedStatus = "idle";
+      state.selectedError = null;
     },
   },
   extraReducers: (builder) => {
@@ -106,9 +112,20 @@ const customersSlice = createSlice({
         state.error = action.payload ?? "Could not load customers.";
       });
 
-    builder.addCase(fetchCustomer.fulfilled, (state, action) => {
-      state.selected = action.payload;
-    });
+    builder
+      .addCase(fetchCustomer.pending, (state) => {
+        state.selectedStatus = "loading";
+        state.selectedError = null;
+      })
+      .addCase(fetchCustomer.fulfilled, (state, action) => {
+        state.selectedStatus = "succeeded";
+        state.selected = action.payload;
+      })
+      .addCase(fetchCustomer.rejected, (state, action) => {
+        state.selectedStatus = "failed";
+        state.selectedError = action.payload ?? "Could not load customer.";
+        state.selected = null;
+      });
 
     // Keep the detail view in sync after an edit.
     builder.addCase(updateCustomer.fulfilled, (state, action) => {

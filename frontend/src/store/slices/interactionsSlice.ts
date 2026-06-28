@@ -13,8 +13,10 @@ import type {
 interface InteractionsState {
   items: InteractionListItem[];
   selected: Interaction | null;
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
+  status: "idle" | "loading" | "succeeded" | "failed"; // the list
+  error: string | null; // the list
+  selectedStatus: "idle" | "loading" | "succeeded" | "failed"; // the single item
+  selectedError: string | null; // the single item (e.g. not found)
 }
 
 const initialState: InteractionsState = {
@@ -22,6 +24,8 @@ const initialState: InteractionsState = {
   selected: null,
   status: "idle",
   error: null,
+  selectedStatus: "idle",
+  selectedError: null,
 };
 
 export const fetchInteractions = createAsyncThunk<
@@ -77,6 +81,8 @@ const interactionsSlice = createSlice({
   reducers: {
     clearSelected(state) {
       state.selected = null;
+      state.selectedStatus = "idle";
+      state.selectedError = null;
     },
   },
   extraReducers: (builder) => {
@@ -94,9 +100,20 @@ const interactionsSlice = createSlice({
         state.error = action.payload ?? "Could not load interactions.";
       });
 
-    builder.addCase(fetchInteraction.fulfilled, (state, action) => {
-      state.selected = action.payload;
-    });
+    builder
+      .addCase(fetchInteraction.pending, (state) => {
+        state.selectedStatus = "loading";
+        state.selectedError = null;
+      })
+      .addCase(fetchInteraction.fulfilled, (state, action) => {
+        state.selectedStatus = "succeeded";
+        state.selected = action.payload;
+      })
+      .addCase(fetchInteraction.rejected, (state, action) => {
+        state.selectedStatus = "failed";
+        state.selectedError = action.payload ?? "Could not load interaction.";
+        state.selected = null;
+      });
 
     builder.addCase(updateInteraction.fulfilled, (state, action) => {
       if (state.selected?.id === action.payload.id) {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
+import { ErrorState } from "@/components/common/ErrorState";
 import { Loading } from "@/components/common/Loading";
 import { InteractionInsights } from "@/components/insights/InteractionInsights";
 import { Badge } from "@/components/ui/badge";
@@ -19,11 +20,16 @@ export default function InteractionDetailPage() {
   const id = Number(params.id);
   const dispatch = useAppDispatch();
   const interaction = useAppSelector((s) => s.interactions.selected);
+  const selectedStatus = useAppSelector((s) => s.interactions.selectedStatus);
+  const selectedError = useAppSelector((s) => s.interactions.selectedError);
 
   useEffect(() => {
     dispatch(fetchInteraction(id));
   }, [dispatch, id]);
 
+  if (selectedStatus === "failed") {
+    return <ErrorState message={selectedError ?? "Interaction not found."} />;
+  }
   if (!interaction || interaction.id !== id) {
     return <Loading label="Loading interaction..." />;
   }
